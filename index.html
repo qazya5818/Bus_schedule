@@ -40,7 +40,7 @@
           <!-- 드롭다운 메뉴 -->
           <div id="settingsDropdown" class="hidden absolute right-0 top-11 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden py-1">
             <div class="px-4 py-2.5 text-xs font-bold text-gray-400 bg-gray-50 border-b border-gray-100 text-center">
-              이번 주(월요일) 나의 스케줄
+              이번 주 나의 스케줄
             </div>
             <div class="flex flex-col p-1 gap-0.5">
               <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(0)">1조 A조</button>
@@ -163,14 +163,16 @@
       }
     };
 
-    function getMondayTime(d) {
+    // 해당 주의 월요일(주 시작일)을 구하는 함수
+    function getMonday(d) {
       const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       const day = date.getDay();
       const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-      return new Date(date.setDate(diff)).getTime();
+      return new Date(date.setDate(diff));
     }
 
-    let baseMondayTime = getMondayTime(new Date(2026, 6, 20)); 
+    // 기본 기준 월요일: 2026년 7월 27일 월요일
+    let baseMondayTime = new Date(2026, 6, 27).getTime();
     let baseCycleIndex = 3; // 기본 세팅 2조 P조 (인덱스 3)
 
     const savedMonday = localStorage.getItem('schedule_baseMondayTime');
@@ -180,15 +182,21 @@
       baseCycleIndex = parseInt(savedCycle, 10);
     }
 
-    // 현재 캘린더에서 보고 있는 연도/월 상태 (기본 2026년 7월)
     let currentYear = 2026;
-    let currentMonth = 6; // 0부터 시작하므로 6 = 7월
+    let currentMonth = 6; // 7월
 
+    // 14일(2주) 주기 로직 반영
     function getScheduleInfo(targetDate) {
-      const targetMondayTime = getMondayTime(targetDate);
-      const diffWeeks = Math.round((targetMondayTime - baseMondayTime) / (7 * 24 * 60 * 60 * 1000));
+      const targetMonday = getMonday(targetDate);
+      const baseMonday = new Date(baseMondayTime);
       
-      let currentCycle = (baseCycleIndex + diffWeeks) % 6;
+      const diffTime = targetMonday.getTime() - baseMonday.getTime();
+      const diffWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
+      
+      // 2주(14일) 단위로 조가 바뀌므로 2주마다 인덱스가 1씩 증가
+      const cycleShift = Math.floor(diffWeeks / 2);
+      
+      let currentCycle = (baseCycleIndex + cycleShift) % 6;
       if (currentCycle < 0) currentCycle += 6;
       
       const team = Math.floor(currentCycle / 2) + 1;
@@ -199,12 +207,12 @@
 
     function setBaseSchedule(selectedCycleIndex) {
       const today = new Date();
-      const currentMondayTime = getMondayTime(today);
+      const currentMonday = getMonday(today);
       
-      localStorage.setItem('schedule_baseMondayTime', currentMondayTime.toString());
+      localStorage.setItem('schedule_baseMondayTime', currentMonday.getTime().toString());
       localStorage.setItem('schedule_baseCycleIndex', selectedCycleIndex.toString());
       
-      baseMondayTime = currentMondayTime;
+      baseMondayTime = currentMonday.getTime();
       baseCycleIndex = selectedCycleIndex;
       
       document.getElementById('settingsDropdown').classList.add('hidden');
