@@ -26,12 +26,9 @@
       <div class="flex justify-between items-center mb-3 relative">
         <h2 class="text-sm font-bold text-gray-700">근무 스케줄</h2>
         
-        <!-- 설정 버튼 (아이콘 사이즈 고정 및 쉐도우/인터랙션 강화) -->
+        <!-- 설정 버튼 -->
         <div class="relative">
-          <button id="settingsBtn" class="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-            </svg>
+          <button id="settingsBtn" class="flex items-center bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg">
             기준 설정
           </button>
           
@@ -99,9 +96,9 @@
         </div>
         
         <div class="flex items-center gap-2.5 text-xs font-semibold text-gray-500">
-          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div><span>1조</span></div>
-          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div><span>2조</span></div>
-          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div><span>3조</span></div>
+          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-red-500 rounded-full"><span>1조</span></div></div>
+          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-blue-500 rounded-full"><span>2조</span></div></div>
+          <div class="flex items-center gap-1"><div class="w-2.5 h-2.5 bg-emerald-500 rounded-full"><span>3조</span></div></div>
         </div>
       </div>
       
@@ -157,19 +154,30 @@
       const diffTime = targetMonday.getTime() - baseMonday.getTime();
       const diffWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
       
-      let currentCycle = (baseCycleIndex + diffWeeks) % 6;
-      if (currentCycle < 0) currentCycle += 6;
+      // 2주(14일)마다 조(Team)가 변경됨 -> 주차 차이를 2로 나눈 몫이 조 번호 변화에 해당
+      // 7일마다 P <-> A 시프트가 교대됨
       
-      const mapping = [
+      let baseTeam = 1; // 기준(7/20 주) 조 예시 (기준 설정에 따라 다름)
+      // 기준 설정 인덱스(0~5): 
+      // 0: 1조 P, 1: 1조 A, 2: 2조 P, 3: 2조 A, 4: 3조 P, 5: 3조 A
+      let baseTeamObj = [
         { team: 1, shift: 'P' },
         { team: 1, shift: 'A' },
         { team: 2, shift: 'P' },
         { team: 2, shift: 'A' },
         { team: 3, shift: 'P' },
         { team: 3, shift: 'A' }
-      ];
-      
-      return mapping[currentCycle];
+      ][baseCycleIndex];
+
+      // 2주마다 조 이동 (diffWeeks가 2주 단위로 증가할 때마다 조가 1->2->3->1 순환)
+      let teamShiftOffset = Math.floor(diffWeeks / 2);
+      let currentTeam = ((baseTeamObj.team - 1 + teamShiftOffset) % 3) + 1;
+
+      // 7일마다 P와 A가 교대 (diffWeeks가 1주씩 늘어날 때마다 P <-> A 전환)
+      let isEvenWeek = (diffWeeks % 2 === 0);
+      let currentShift = isEvenWeek ? baseTeamObj.shift : (baseTeamObj.shift === 'P' ? 'A' : 'P');
+
+      return { team: currentTeam, shift: currentShift };
     }
 
     function setBaseSchedule(selectedCycleIndex) {
