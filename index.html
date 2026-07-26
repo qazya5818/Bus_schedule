@@ -12,7 +12,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased selection:bg-blue-200">
   
-  <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg pb-10">
+  <div class="max-w-md mx-auto bg-white min-h-screen shadow-lg pb-10 relative">
     <!-- 상단 헤더 (탑바) -->
     <header class="px-5 py-4 flex justify-between items-center border-b border-gray-100">
       <h1 class="text-xl font-extrabold tracking-tight">내 스케줄</h1>
@@ -47,6 +47,13 @@
     <section class="mt-6 px-5">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-sm font-bold text-gray-700">근무 스케줄</h2>
+        <!-- 시간표 보기 버튼 -->
+        <button onclick="openTimetableModal()" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          시간표 보기
+        </button>
       </div>
 
       <div class="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
@@ -109,6 +116,21 @@
         <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-center text-sm font-medium"></div>
       </div>
     </section>
+
+    <!-- 시간표 보기 팝업 모달 -->
+    <div id="timetableModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+        <div class="px-5 py-4 flex justify-between items-center border-b border-gray-100">
+          <h3 class="font-bold text-base text-gray-800">근무 시간표</h3>
+          <button onclick="closeTimetableModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors font-bold text-lg">
+            ✕
+          </button>
+        </div>
+        <div class="p-4 overflow-y-auto flex justify-center bg-gray-50">
+          <img src="file_000000006754820bbaafd1cdfe7eb151.png" alt="근무 시간표" class="w-full h-auto rounded-2xl shadow-md border border-gray-100 object-contain">
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -128,6 +150,21 @@
     };
 
     const settingNames = ["1조 P조", "1조 A조", "2조 P조", "2조 A조", "3조 P조", "3조 A조"];
+
+    function openTimetableModal() {
+      document.getElementById('timetableModal').classList.remove('hidden');
+    }
+
+    function closeTimetableModal() {
+      document.getElementById('timetableModal').classList.add('hidden');
+    }
+
+    // 배경 클릭 시 모달 닫기
+    document.getElementById('timetableModal').addEventListener('click', (e) => {
+      if (e.target.id === 'timetableModal') {
+        closeTimetableModal();
+      }
+    });
 
     function getMonday(d) {
       const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -230,7 +267,6 @@
 
       document.getElementById('currentSettingLabel').innerText = settingNames[baseCycleIndex];
 
-      // P일 경우 bg-blue-900 (또는 진한 블루 계열), A일 경우 bg-red-900 (또는 진한 레드 계열) 적용
       const todayBadgeBg = todayInfo.shift === 'P' ? 'bg-blue-900/80 text-blue-100' : 'bg-red-900/80 text-red-100';
       const tomorrowBadgeBg = tomorrowInfo.shift === 'P' ? 'bg-blue-900/80 text-blue-100' : 'bg-red-900/80 text-red-100';
 
