@@ -41,12 +41,12 @@
               이번 주 나의 스케줄 기준
             </div>
             <div class="flex flex-col p-1 gap-0.5">
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(0)">1조 A조</button>
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(1)">1조 P조</button>
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(2)">2조 A조</button>
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(3)">2조 P조</button>
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(4)">3조 A조</button>
-              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(5)">3조 P조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(0)">1조 P조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(1)">1조 A조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(2)">2조 P조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(3)">2조 A조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(4)">3조 P조</button>
+              <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(5)">3조 A조</button>
             </div>
           </div>
         </div>
@@ -138,9 +138,9 @@
       return new Date(date.setDate(diff));
     }
 
-    // 기준 월요일: 2026년 7월 13일 월요일
-    let baseMondayTime = new Date(2026, 6, 13).getTime();
-    let baseCycleIndex = 2; // 예시: 7/13 월요일 기준 2조 A조 (인덱스 2)
+    // 기준 월요일: 2026년 7월 27일 월요일
+    let baseMondayTime = new Date(2026, 6, 27).getTime();
+    let baseCycleIndex = 0; // 7/27 주간 기준 첫 순서 (예: 1조 P조 = 0)
 
     const savedMonday = localStorage.getItem('schedule_baseMondayTime');
     const savedCycle = localStorage.getItem('schedule_baseCycleIndex');
@@ -152,7 +152,7 @@
     let currentYear = 2026;
     let currentMonth = 6; // 7월
 
-    // 핵심 로직: 주 단위로 계산
+    // 주 단위 순환 로직 (순서: P -> A 형태의 6단계 사이클)
     function getScheduleInfo(targetDate) {
       const targetMonday = getMonday(targetDate);
       const baseMonday = new Date(baseMondayTime);
@@ -160,14 +160,20 @@
       const diffTime = targetMonday.getTime() - baseMonday.getTime();
       const diffWeeks = Math.round(diffTime / (7 * 24 * 60 * 60 * 1000));
       
-      // 1주일마다 시프트(A->P 또는 조 변경)가 순환함 (인덱스 +1)
       let currentCycle = (baseCycleIndex + diffWeeks) % 6;
       if (currentCycle < 0) currentCycle += 6;
       
-      const team = Math.floor(currentCycle / 2) + 1;
-      const shift = (currentCycle % 2 === 0) ? 'A' : 'P';
+      // 사이클 매핑: (0: 1조 P, 1: 1조 A, 2: 2조 P, 3: 2조 A, 4: 3조 P, 5: 3조 A)
+      const mapping = [
+        { team: 1, shift: 'P' },
+        { team: 1, shift: 'A' },
+        { team: 2, shift: 'P' },
+        { team: 2, shift: 'A' },
+        { team: 3, shift: 'P' },
+        { team: 3, shift: 'A' }
+      ];
       
-      return { team, shift };
+      return mapping[currentCycle];
     }
 
     function setBaseSchedule(selectedCycleIndex) {
