@@ -38,7 +38,7 @@
           <!-- 드롭다운 메뉴 -->
           <div id="settingsDropdown" class="hidden absolute right-0 top-11 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden py-1">
             <div class="px-4 py-2.5 text-xs font-bold text-gray-400 bg-gray-50 border-b border-gray-100 text-center">
-              이번 주 나의 스케줄 기준
+              7/20 주차 나의 스케줄 기준
             </div>
             <div class="flex flex-col p-1 gap-0.5">
               <button class="text-left px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors" onclick="setBaseSchedule(0)">1조 P조</button>
@@ -138,9 +138,9 @@
       return new Date(date.setDate(diff));
     }
 
-    // 기준 월요일: 2026년 7월 27일 월요일
-    let baseMondayTime = new Date(2026, 6, 27).getTime();
-    let baseCycleIndex = 0; // 7/27 주간 기준 첫 순서 (예: 1조 P조 = 0)
+    // 기준 월요일: 2026년 7월 20일 월요일
+    let baseMondayTime = new Date(2026, 6, 20).getTime();
+    let baseCycleIndex = 0; // 7/20 주간 기준 첫 순서 (예: 1조 P조 = 0)
 
     const savedMonday = localStorage.getItem('schedule_baseMondayTime');
     const savedCycle = localStorage.getItem('schedule_baseCycleIndex');
@@ -152,7 +152,7 @@
     let currentYear = 2026;
     let currentMonth = 6; // 7월
 
-    // 주 단위 순환 로직 (순서: P -> A 형태의 6단계 사이클)
+    // 주 단위 순환 로직 (7일마다 P->A 전환, 14일마다 조 이동 반영)
     function getScheduleInfo(targetDate) {
       const targetMonday = getMonday(targetDate);
       const baseMonday = new Date(baseMondayTime);
@@ -163,27 +163,28 @@
       let currentCycle = (baseCycleIndex + diffWeeks) % 6;
       if (currentCycle < 0) currentCycle += 6;
       
-      // 사이클 매핑: (0: 1조 P, 1: 1조 A, 2: 2조 P, 3: 2조 A, 4: 3조 P, 5: 3조 A)
+      // 순서: 
+      // 0주차(7/20): P -> 1주차(7/27): A (같은 조 내 시프트 전환)
+      // 2주차(8/3): 다음 조 P로 이동 (14일마다 조 변경)
       const mapping = [
-        { team: 1, shift: 'P' },
-        { team: 1, shift: 'A' },
-        { team: 2, shift: 'P' },
-        { team: 2, shift: 'A' },
-        { team: 3, shift: 'P' },
-        { team: 3, shift: 'A' }
+        { team: 1, shift: 'P' }, // 7/20 주
+        { team: 1, shift: 'A' }, // 7/27 주
+        { team: 2, shift: 'P' }, // 8/3 주
+        { team: 2, shift: 'A' }, // 8/10 주
+        { team: 3, shift: 'P' }, // 8/17 주
+        { team: 3, shift: 'A' }  // 8/24 주
       ];
       
       return mapping[currentCycle];
     }
 
     function setBaseSchedule(selectedCycleIndex) {
-      const today = new Date();
-      const currentMonday = getMonday(today);
+      const targetMonday = new Date(2026, 6, 20); // 7/20 기준 고정
       
-      localStorage.setItem('schedule_baseMondayTime', currentMonday.getTime().toString());
+      localStorage.setItem('schedule_baseMondayTime', targetMonday.getTime().toString());
       localStorage.setItem('schedule_baseCycleIndex', selectedCycleIndex.toString());
       
-      baseMondayTime = currentMonday.getTime();
+      baseMondayTime = targetMonday.getTime();
       baseCycleIndex = selectedCycleIndex;
       
       document.getElementById('settingsDropdown').classList.add('hidden');
